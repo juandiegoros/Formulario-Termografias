@@ -1,0 +1,1070 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inspección Termografía – Subestación</title>
+  <style>
+    :root{ --gap:12px; }
+    body{ font-family: Arial, Helvetica, sans-serif; margin:0; background:#f6f7fb; color:#111; }
+    .wrap{ max-width:1100px; margin:24px auto; padding:0 16px; }
+    h1{ font-size:20px; margin:0 0 14px; }
+    .card{ background:#fff; border-radius:14px; box-shadow:0 6px 20px rgba(0,0,0,.06); padding:16px; margin:14px 0; }
+    .section-title{ display:flex; align-items:center; gap:10px; margin:0 0 12px; }
+    .badge{ background:#e9eefc; border-radius:999px; padding:4px 10px; font-size:12px; }
+    .grid{ display:grid; grid-template-columns: repeat(12, 1fr); gap: var(--gap); }
+    .col-12{ grid-column: span 12; }
+    .col-6{ grid-column: span 6; }
+    .col-4{ grid-column: span 4; }
+    .col-3{ grid-column: span 3; }
+    .col-2{ grid-column: span 2; }
+    label{ font-size:12px; font-weight:700; display:block; margin:2px 0 6px; }
+    input, select, textarea{
+      width:100%; box-sizing:border-box; padding:10px 10px;
+      border:1px solid #d9dce7; border-radius:10px; background:#fff;
+      font-size:14px; outline:none;
+    }
+    textarea{ min-height:90px; resize:vertical; }
+    .row-actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    button{
+      border:none; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700;
+    }
+    .btn-primary{ background:#2563eb; color:#fff; }
+    .btn-ghost{ background:#eef2ff; color:#1f2a44; }
+    .msg{ margin-top:10px; padding:10px 12px; border-radius:10px; font-size:14px; display:none; }
+    .msg.ok{ background:#e7f7ee; display:block; }
+    .msg.err{ background:#fdeaea; display:block; }
+    .muted{ font-size:12px; color:#566; margin-top:8px; }
+    .hide{ display:none !important; }
+    .cable-block{ display: contents; }
+    .cable-block.hide{ display:none !important; }
+    .divider{
+      grid-column: span 12;
+      height:1px; background:#edf0f7; border-radius:1px;
+      margin:6px 0;
+    }
+    .subhead{
+      grid-column: span 12;
+      font-weight:800; font-size:12px; letter-spacing:.2px;
+      color:#2b3448; margin-top:2px;
+      background:#f3f6ff; border:1px solid #e6ebff;
+      padding:8px 10px; border-radius:10px;
+    }
+
+    @media (max-width:900px){
+      .col-6,.col-4,.col-3,.col-2{ grid-column: span 12; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Formulario de Inspección (Cable de comunicación / Subestación)</h1>
+
+    <!-- DATOS GENERALES -->
+<div class="card">
+      <div class="section-title">
+        <div class="badge">1</div>
+        <strong>Datos generales</strong>
+      </div>
+      <div class="grid">
+        <div class="col-4">
+          <label>Fecha y hora de Registro</label>
+          <input id="fechaHoraRegistro" type="datetime-local" />
+        </div>
+        <div class="col-4">
+          <label>Empresa</label>
+          <input id="empresa" placeholder="Empresa" />
+        </div>
+        <div class="col-4">
+          <label>Responsable de la Inspección (Apellido y nombre Operario)</label>
+          <input id="responsableInspeccion" placeholder="Apellido y nombre" />
+        </div>
+        <div class="col-3">
+          <label>CR</label>
+          <select id="CR">
+            <option value="">-- Selecciona --</option>
+            <option>60122</option>
+            <option>60124</option>
+            <option>60126</option>
+          </select>
+        </div>          
+
+        <!-- Dependencia Tipo -> SED -> Celda -->
+        <div class="col-3">
+          <label>Tipo de SED</label>
+          <select id="tipoSed">
+            <option value="">-- Selecciona --</option>
+            <option>Convencional</option>
+            <option>Aérea</option>
+            <option>Compacta</option>
+          </select>
+        </div>
+
+        <div class="col-3">
+          <label>Subestación (SED)</label>
+          <input id="sed" placeholder="Ej: 00321A" autocomplete="off" />
+          <div class="muted">5 números + 1 letra (ej: 00321A). Si escribes 321A se normaliza a 00321A.</div>
+        </div>
+
+        <div class="col-3">
+          <label>Celda (solo Convencional)</label>
+          <input id="celda" placeholder="Ej: A / B / C" disabled />
+          <div class="muted">Solo se habilita cuando el Tipo de SED es Convencional.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CABLE DE COMUNICACIÓN (MODIFICADO) -->
+    <div class="card">
+      <div class="section-title">
+        <div class="badge">2</div>
+        <strong>Cable de comunicación</strong>
+      </div>
+
+      <div class="grid">
+        <div class="subhead">Sistema general</div>
+
+        <div class="col-4">
+          <label>Ingresa la corriente en la fase R</label>
+          <input id="corrienteR" type="number" step="0.01" />
+        </div>
+        <div class="col-4">
+          <label>Ingresa la corriente en la fase S</label>
+          <input id="corrienteS" type="number" step="0.01" />
+        </div>
+        <div class="col-4">
+          <label>Ingresa la corriente en la fase T</label>
+          <input id="corrienteT" type="number" step="0.01" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="subhead">Condición física (aplica a la inspección del cable de comunicación)</div>
+
+        <div class="col-4">
+          <label>Estado físico del cable (Criticidad)</label>
+          <select id="estadoFisicoCable">
+            <option value="">--</option>
+            <option>Criticidad A</option>
+            <option>Criticidad B</option>
+            <option>Criticidad C</option>
+            <option>Sin deterioro</option>
+          </select>
+        </div>
+        <div class="col-4">
+          <label>Estado físico de la pletina (Criticidad)</label>
+          <select id="estadoFisicoPletina">
+            <option value="">--</option>
+            <option>Criticidad A</option>
+            <option>Criticidad B</option>
+            <option>Criticidad C</option>
+            <option>Sin deterioro</option>
+          </select>
+        </div>
+        <div class="col-4">
+          <label>Estado físico del conector del cable de comunicación (Criticidad)</label>
+          <select id="estadoFisicoConector">
+            <option value="">--</option>
+            <option>Criticidad A</option>
+            <option>Criticidad B</option>
+            <option>Criticidad C</option>
+            <option>Sin deterioro</option>
+          </select>
+        </div>
+
+        <div class="col-12">
+          <label>En cualquiera de los 3 casos, si no aplica y se ha detectado alguna anomalía, indicar algún comentario adicional</label>
+          <textarea id="comentarioCable"></textarea>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="subhead">Cantidad de tipos de cables de comunicación encontrados</div>
+
+        <div class="col-4">
+          <label>Ingrese el número de tipos de cables de comunicación encontrados (1 a 3)</label>
+          <select id="numCablesCom">
+            <option value="">-- Selecciona --</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ===== Cable 1 ===== -->
+        <div class="subhead" id="hdrCable1">Cable de comunicación 1</div>
+
+        <div class="col-3">
+          <label>Temperatura en el cable de comunicación 1 (°C)</label>
+          <input id="tempCableC1" type="number" step="0.1" />
+        </div>
+        <div class="col-3">
+          <label>Delta de Temperatura en el cable de comunicación 1 (°C)</label>
+          <input id="deltaTempCableC1" type="number" step="0.1" />
+        </div>
+        <div class="col-3">
+          <label>¿En qué fase presenta la anomalía en cable de comunicación 1? (R/S/T)</label>
+          <select id="faseAnomalia1">
+            <option value="">-- Selecciona --</option>
+            <option>R</option>
+            <option>S</option>
+            <option>T</option>
+          </select>
+        </div>
+        <div class="col-3">
+          <label>Anomalía 1 en</label>
+          <select id="anomaliaEn1">
+            <option value="">-- Selecciona --</option>
+            <option>Borne de transformador</option>
+            <option>Lado de tablero</option>
+          </select>
+        </div>
+
+        <div class="col-3">
+          <label>Cantidad de Ternas del cable de comunicación 1</label>
+          <input id="cantidadTernas1" type="number" step="1" min="0" />
+        </div>
+        <div class="col-3">
+          <label>Material de cable de comunicación 1</label>
+          <select id="materialCable1">
+            <option value="">-- Selecciona --</option>
+            <option>Aluminio</option>
+            <option>Cobre</option>
+          </select>
+        </div>
+        <div class="col-4">
+          <label>Tipo de cable de comunicación 1</label>
+          <select id="tipoCable1">
+            <option value="">-- Selecciona --</option>
+            <option>NAYY</option>
+            <option>NA2XY</option>
+            <option>CAIS</option>
+            <option>CAAIS</option>
+            <option>Concéntrico</option>
+            <option>NYY</option>
+            <option>N2XY</option>
+            <option>NKY</option>
+            <option>NKBA</option>
+            <option>NYBY</option>
+            <option>TW</option>
+          </select>
+        </div>
+        <div class="col-2">
+          <label>Sección del cable de comunicación 1 (mm2)</label>
+          <input id="seccionCable1" type="number" step="0.1" min="0" />
+        </div>
+
+        <!-- ===== Cable 2 ===== -->
+        <div id="blkCable2" class="cable-block hide">
+          <div class="divider"></div>
+          <div class="subhead">Cable de comunicación 2</div>
+
+            <div class="col-3">
+              <label>Temperatura en el cable de comunicación 2 (°C)</label>
+              <input id="tempCableC2" type="number" step="0.1" />
+            </div>
+            <div class="col-3">
+              <label>Delta de Temperatura en el cable de comunicación 2 (°C)</label>
+              <input id="deltaTempCableC2" type="number" step="0.1" />
+            </div>
+            <div class="col-3">
+              <label>¿En qué fase presenta la anomalía en cable de comunicación 2? (R/S/T)</label>
+              <select id="faseAnomalia2">
+                <option value="">-- Selecciona --</option>
+                <option>R</option>
+                <option>S</option>
+                <option>T</option>
+              </select>
+            </div>
+            <div class="col-3">
+              <label>Anomalía 2 en</label>
+              <select id="anomaliaEn2">
+                <option value="">-- Selecciona --</option>
+                <option>Borne de transformador</option>
+                <option>Lado de tablero</option>
+              </select>
+            </div>
+
+            <div class="col-3">
+              <label>Cantidad de Ternas del cable de comunicación 2</label>
+              <input id="cantidadTernas2" type="number" step="1" min="0" />
+            </div>
+            <div class="col-3">
+              <label>Material de cable de comunicación 2</label>
+              <select id="materialCable2">
+                <option value="">-- Selecciona --</option>
+                <option>Aluminio</option>
+                <option>Cobre</option>
+              </select>
+            </div>
+            <div class="col-4">
+              <label>Tipo de cable de comunicación 2</label>
+              <select id="tipoCable2">
+                <option value="">-- Selecciona --</option>
+                <option>NAYY</option>
+                <option>NA2XY</option>
+                <option>CAIS</option>
+                <option>CAAIS</option>
+                <option>Concéntrico</option>
+                <option>NYY</option>
+                <option>N2XY</option>
+                <option>NKY</option>
+                <option>NKBA</option>
+                <option>NYBY</option>
+                <option>TW</option>
+              </select>
+            </div>
+            <div class="col-2">
+              <label>Sección del cable de comunicación 2 (mm2)</label>
+              <input id="seccionCable2" type="number" step="0.1" min="0" />
+            </div>
+        </div>
+
+        <!-- ===== Cable 3 ===== -->
+        <div id="blkCable3" class="cable-block hide">
+          <div class="divider"></div>
+          <div class="subhead">Cable de comunicación 3</div>
+
+            <div class="col-3">
+              <label>Temperatura en el cable de comunicación 3 (°C)</label>
+              <input id="tempCableC3" type="number" step="0.1" />
+            </div>
+            <div class="col-3">
+              <label>Delta de Temperatura en el cable de comunicación 3 (°C)</label>
+              <input id="deltaTempCableC3" type="number" step="0.1" />
+            </div>
+            <div class="col-3">
+              <label>¿En qué fase presenta la anomalía en cable de comunicación 3? (R/S/T)</label>
+              <select id="faseAnomalia3">
+                <option value="">-- Selecciona --</option>
+                <option>R</option>
+                <option>S</option>
+                <option>T</option>
+              </select>
+            </div>
+            <div class="col-3">
+              <label>Anomalía 3 en</label>
+              <select id="anomaliaEn3">
+                <option value="">-- Selecciona --</option>
+                <option>Borne de transformador</option>
+                <option>Lado de tablero</option>
+              </select>
+            </div>
+
+            <div class="col-3">
+              <label>Cantidad de Ternas del cable de comunicación 3</label>
+              <input id="cantidadTernas3" type="number" step="1" min="0" />
+            </div>
+            <div class="col-3">
+              <label>Material de cable de comunicación 3</label>
+              <select id="materialCable3">
+                <option value="">-- Selecciona --</option>
+                <option>Aluminio</option>
+                <option>Cobre</option>
+              </select>
+            </div>
+            <div class="col-4">
+              <label>Tipo de cable de comunicación 3</label>
+              <select id="tipoCable3">
+                <option value="">-- Selecciona --</option>
+                <option>NAYY</option>
+                <option>NA2XY</option>
+                <option>CAIS</option>
+                <option>CAAIS</option>
+                <option>Concéntrico</option>
+                <option>NYY</option>
+                <option>N2XY</option>
+                <option>NKY</option>
+                <option>NKBA</option>
+                <option>NYBY</option>
+                <option>TW</option>
+              </select>
+            </div>
+            <div class="col-2">
+              <label>Sección del cable de comunicación 3 (mm2)</label>
+              <input id="seccionCable3" type="number" step="0.1" min="0" />
+            </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ANOMALÍA TÉRMICA EN OTRO ELEMENTO -->
+    <div class="card">
+      <div class="section-title">
+        <div class="badge">3</div>
+        <strong>Anomalía térmica en otro elemento</strong>
+      </div>
+
+      <div class="grid">
+        <div class="col-4">
+          <label>¿Presenta anomalía térmica en otro elemento de la subestación?</label>
+          <select id="anomaliaOtroElemento">
+            <option value="">-- Selecciona --</option>
+            <option value="Si">Si</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+
+        <div class="col-8 hide" id="blkActivoAnomalia">
+          <label>Selecciona el activo con anomalía</label>
+          <select id="activoConAnomalia">
+            <option value="">-- Selecciona --</option>
+            <option>Borne de B.T. lado transformador</option>
+            <option>Cable de comunicación lado tablero</option>
+            <option>Cuba del transformador</option>
+            <option>Llaves de B.T.</option>
+            <option>Cables de salida de B.T.</option>
+            <option>Postafusible de M.T.</option>
+            <option>Conector codo M.T.</option>
+          </select>
+        </div>
+
+        <div class="col-3 hide" id="blkTempMax">
+          <label>Ingresa la temperatura máxima registrada</label>
+          <input id="tempMaxRegistrada" type="number" step="0.1" />
+        </div>
+        <div class="col-3 hide" id="blkDeltaOtro">
+          <label>Delta °C</label>
+          <input id="deltaOtroC" type="number" step="0.1" />
+        </div>
+
+        <div class="col-12 hide" id="blkObsOtro">
+          <label>Estado físico / Observaciones</label>
+          <textarea id="estadoFisicoObsOtro"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESTADO DE LA SUBESTACIÓN -->
+    <div class="card">
+      <div class="section-title">
+        <div class="badge">4</div>
+        <strong>Estado de la Subestación</strong>
+      </div>
+
+      <div class="grid">
+        <div class="col-6">
+          <label>¿Estado del transformador?</label>
+          <select id="estadoTransformador" multiple size="6">
+            <option>Buen estado</option>
+            <option>Carcaza corroída</option>
+            <option>Polución en aisladores</option>
+            <option>Pérdida de aceite activa</option>
+            <option>Mancha de pérdida de aceite</option>
+            <option>Otras obs. para describir</option>
+          </select>
+          <div class="muted">Puedes seleccionar más de una opción (Ctrl + click).</div>
+        </div>
+
+        <div class="col-6">
+          <label>¿Tipo de tablero?</label>
+          <select id="tipoTablero">
+            <option value="">-- Selecciona --</option>
+            <option>A nivel</option>
+            <option>A aéreo</option>
+          </select>
+        </div>
+
+        <div class="col-6">
+          <label>¿Estado del tablero de B.T.?</label>
+          <select id="estadoTableroBT" multiple size="7">
+            <option>Buen estado</option>
+            <option>Corrosión A</option>
+            <option>Corrosión B</option>
+            <option>Corrosión C</option>
+            <option>Inclinado mayor a 10°</option>
+            <option>Otras obs. para describir</option>
+          </select>
+        </div>
+
+        <div class="col-6">
+          <label>¿Estado del poste?</label>
+          <select id="estadoPoste" multiple size="8">
+            <option>Buen estado</option>
+            <option>Corrosión A</option>
+            <option>Corrosión AV</option>
+            <option>Corrosión B1</option>
+            <option>Corrosión B</option>
+            <option>Corrosión C</option>
+            <option>Inclinado mayor a 10°</option>
+            <option>Corrosión a lo largo del poste</option>
+            <option>Otras obs. para describir</option>
+          </select>
+        </div>
+
+        <div class="col-6">
+          <label>¿Estado de ménsula o cruceta CAC?</label>
+          <select id="estadoMensulaCruceta" multiple size="6">
+            <option>Buen estado</option>
+            <option>Corrosión A</option>
+            <option>Corrosión B</option>
+            <option>Corrosión C</option>
+            <option>Otras obs. para describir</option>
+          </select>
+        </div>
+
+        <div class="col-6">
+          <label>¿Estado de la ferrreteria (diagonal, varillas, abarazaderas y aisladores)?</label>
+          <select id="estadoFerreteria" multiple size="5">
+            <option>Buen estado</option>
+            <option>Corroído</option>
+            <option>Otras obs. para describir</option>
+          </select>
+        </div>
+
+        <div class="col-6">
+          <label>¿Estado del cut out?</label>
+          <select id="estadoCutOut" multiple size="5">
+            <option>Buen estado</option>
+            <option>Corroído</option>
+            <option>Otras obs. para describir</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label>¿Requiere instalar riel?</label>
+          <select id="requiereRiel">
+            <option value="">-- Selecciona --</option>
+            <option value="Si">Si</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+        <div class="col-6 hide" id="blkCantidadRieles">
+          <label>¿Cuántos rieles?</label>
+          <input id="cantidadRieles" type="number" step="1" min="1" />
+        </div>
+
+
+        <div class="col-12">
+          <label>Observaciones generales (opcional)</label>
+          <textarea id="observacionesGenerales"></textarea>
+        </div>
+      </div>
+    </div>
+      <!-- FOTOS -->
+      <div class="card">
+        <div class="section-title">
+          <div class="badge">5</div>
+          <strong>Fotos</strong>
+        </div>
+
+        <div class="grid">
+          <div class="col-4">
+            <label>Foto Panorámica (obligatoria)</label>
+            <input id="fotoPanoramica" type="file" accept="image/*" />
+          </div>
+
+          <div class="col-4">
+            <label>Foto Tablero Abierto (obligatoria)</label>
+            <input id="fotoTableroAbierto" type="file" accept="image/*" />
+          </div>
+
+          <div class="col-4">
+            <label>Foto Anomalía (obligatoria)</label>
+            <input id="fotoAnomalia" type="file" accept="image/*" />
+          </div>
+
+          <div class="col-12">
+            <label>Otras fotos (opcional, puedes subir varias)</label>
+            <input id="fotosExtras" type="file" accept="image/*" multiple />
+            <div class="muted">Estas fotos son opcionales. Puedes cargar las que quieras.</div>
+          </div>
+        </div>
+      </div>
+
+    <!-- ACTIONS -->
+    <div class="card">
+      <div class="row-actions">
+        <button class="btn-primary" id="btnEnviar">Enviar</button>
+        <button class="btn-ghost" id="btnLimpiar" type="button">Limpiar</button>
+      </div>
+      <div id="msg" class="msg"></div>
+    </div>
+
+  </div>
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  // ===================== CONFIG INTERNA =====================
+  const FLOW_URL = "https://default1c0051dd45964b1a9849d060735057.69.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/ae93269e01a4423ba4c2971abd8ffedb/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=NmaEFSqEjudsLhpFmGeR8W16XuMFDWTzA-mBdqC2kbw";
+
+  const TOKEN  = "";        // opcional
+  const FORM_ID = "";       // opcional
+
+  // ===================== Utils =====================
+  function showMsg(text, ok=true){
+    const el = $("msg");
+    el.textContent = text;
+    el.className = "msg " + (ok ? "ok" : "err");
+  }
+
+  function getMultiSelectValues(selectId){
+    const sel = $(selectId);
+    return Array.from(sel.selectedOptions).map(o => o.value || o.text);
+  }
+
+  function numOrNull(id){
+    const v = $(id).value;
+    return v === "" ? null : Number(v);
+  }
+
+  // ===================== Files -> Base64 =====================
+  function fileToBase64(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const res = String(reader.result || "");
+        const comma = res.indexOf(",");
+        const base64 = comma >= 0 ? res.slice(comma + 1) : res;
+        resolve({
+          name: file.name,
+          contentType: file.type || "application/octet-stream",
+          base64
+        });
+      };
+      reader.onerror = () => reject(reader.error || new Error("No se pudo leer el archivo"));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function makeRegistroId(){
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2,"0");
+    const stamp = d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"_"+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds());
+    const rnd = Math.random().toString(16).slice(2,10);
+    return `${stamp}_${rnd}`;
+  }
+
+  async function getFotosPayload(){
+    const p = $("fotoPanoramica").files?.[0];
+    const t = $("fotoTableroAbierto").files?.[0];
+    const a = $("fotoAnomalia").files?.[0];
+
+    if(!p || !t || !a){
+      return { ok:false, reason:"Debes adjuntar las 3 fotos obligatorias: Panorámica, Tablero Abierto y Anomalía." };
+    }
+
+    const extras = Array.from($("fotosExtras").files || []);
+
+    const [panoramica, tablero_abierto, anomalia, ...otros] = await Promise.all([
+      fileToBase64(p),
+      fileToBase64(t),
+      fileToBase64(a),
+      ...extras.map(fileToBase64)
+    ]);
+
+    return { ok:true, fotos: { panoramica, tablero_abierto, anomalia, otros } };
+  }
+
+  // ===================== Normalización / Validación SED =====================
+  function expectedSuffixByTipo(tipo){
+    if(tipo === "Aérea") return "A";
+    if(tipo === "Compacta") return "C";
+    if(tipo === "Convencional") return "S";
+    return "";
+  }
+
+  function normalizeSed(raw){
+    const s = (raw || "").trim().toUpperCase();
+    const m = s.match(/^(\d{1,5})\s*([A-Z])$/);
+    if(!m) return { ok:false, value:s, reason:"Formato inválido. Usa: 5 números + 1 letra (ej: 00321A)." };
+    const digits = m[1].padStart(5, "0");
+    const letter = m[2];
+    return { ok:true, value: digits + letter, digits, letter };
+  }
+
+  function validateSedAgainstTipo(){
+    const tipo = $("tipoSed").value;
+    const exp = expectedSuffixByTipo(tipo);
+    const raw = $("sed").value;
+
+    if(!raw) return true;
+
+    const norm = normalizeSed(raw);
+    if(!norm.ok){
+      showMsg(norm.reason, false);
+      return false;
+    }
+
+    $("sed").value = norm.value;
+
+    if(exp && norm.letter !== exp){
+      showMsg(`La SED no corresponde al tipo seleccionado. Si es "${tipo}", debe terminar en "${exp}".`, false);
+      return false;
+    }
+    return true;
+  }
+
+  function refreshCeldaEnabled(){
+    const tipo = $("tipoSed").value;
+    const isConv = (tipo === "Convencional");
+    $("celda").disabled = !isConv;
+    if(!isConv) $("celda").value = "";
+  }
+
+  // ===================== CR -> Tipo de SED (reglas) =====================
+  function setTipoSedOptions(allowed, forceValue = null){
+    const sel = $("tipoSed");
+    const current = sel.value;
+
+    sel.innerHTML =
+      `<option value="">-- Selecciona --</option>` +
+      allowed.map(v => `<option>${v}</option>`).join("");
+
+    if(forceValue){
+      sel.value = forceValue;
+      sel.disabled = true;
+    } else {
+      sel.disabled = false;
+      sel.value = allowed.includes(current) ? current : "";
+    }
+
+    refreshCeldaEnabled();
+    if($("sed").value.trim()) validateSedAgainstTipo();
+  }
+
+  function applyCrRules(){
+    const cr = $("CR").value;
+
+    if(cr === "60126"){
+      setTipoSedOptions(["Convencional"], "Convencional");
+      return;
+    }
+    if(cr === "60122" || cr === "60124"){
+      setTipoSedOptions(["Compacta", "Aérea"], null);
+      return;
+    }
+    setTipoSedOptions(["Convencional","Aérea","Compacta"], null);
+  }
+
+  // ===================== Riel (mostrar/ocultar) =====================
+  $("requiereRiel").addEventListener("change", () => {
+    const si = $("requiereRiel").value === "Si";
+    $("blkCantidadRieles").classList.toggle("hide", !si);
+    if(!si) $("cantidadRieles").value = "";
+  });
+
+  // ===================== Anomalía otro elemento =====================
+  $("anomaliaOtroElemento").addEventListener("change", () => {
+    const si = $("anomaliaOtroElemento").value === "Si";
+    $("blkActivoAnomalia").classList.toggle("hide", !si);
+    $("blkTempMax").classList.toggle("hide", !si);
+    $("blkDeltaOtro").classList.toggle("hide", !si);
+    $("blkObsOtro").classList.toggle("hide", !si);
+
+    if(!si){
+      $("activoConAnomalia").value = "";
+      $("tempMaxRegistrada").value = "";
+      $("deltaOtroC").value = "";
+      $("estadoFisicoObsOtro").value = "";
+    }
+  });
+
+  // ===================== Cable de comunicación: mostrar según N (1..3) =====================
+  function setCableBlocks(n){
+    const show2 = n >= 2;
+    const show3 = n >= 3;
+
+    $("blkCable2").classList.toggle("hide", !show2);
+    $("blkCable3").classList.toggle("hide", !show3);
+
+    if(!show2){
+      ["tempCableC2","deltaTempCableC2","faseAnomalia2","anomaliaEn2","cantidadTernas2","materialCable2","tipoCable2","seccionCable2"]
+        .forEach(id => { const el = $(id); if(el) el.value = ""; });
+    }
+    if(!show3){
+      ["tempCableC3","deltaTempCableC3","faseAnomalia3","anomaliaEn3","cantidadTernas3","materialCable3","tipoCable3","seccionCable3"]
+        .forEach(id => { const el = $(id); if(el) el.value = ""; });
+    }
+  }
+
+  $("numCablesCom").addEventListener("change", () => {
+    const n = Number($("numCablesCom").value || 0);
+    setCableBlocks(n);
+  });
+
+  // ===================== Defaults =====================
+  (function initDefaults(){
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2,"0");
+    const local = now.getFullYear() + "-" + pad(now.getMonth()+1) + "-" + pad(now.getDate()) + "T" + pad(now.getHours()) + ":" + pad(now.getMinutes());
+    $("fechaHoraRegistro").value = local;
+
+    $("anomaliaOtroElemento").dispatchEvent(new Event("change"));
+    $("requiereRiel").dispatchEvent(new Event("change"));
+    setCableBlocks(0);
+    applyCrRules();
+    refreshCeldaEnabled();
+  })();
+
+  $("CR").addEventListener("change", applyCrRules);
+
+  // ===================== Eventos Tipo/SED =====================
+  $("tipoSed").addEventListener("change", () => {
+    refreshCeldaEnabled();
+    if($("sed").value.trim()) validateSedAgainstTipo();
+  });
+
+  $("sed").addEventListener("blur", () => {
+    if(!$("sed").value.trim()) return;
+    validateSedAgainstTipo();
+  });
+
+  // ===================== Limpiar =====================
+  $("btnLimpiar").addEventListener("click", () => {
+    if(!confirm("¿Limpiar el formulario?")) return;
+
+    document.querySelectorAll("input, textarea").forEach(el => { el.value = ""; });
+
+    document.querySelectorAll("select").forEach(sel => {
+      sel.selectedIndex = -1;
+      sel.value = "";
+      Array.from(sel.options).forEach(o => o.selected = false);
+    });
+
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2,"0");
+    const local = now.getFullYear() + "-" + pad(now.getMonth()+1) + "-" + pad(now.getDate()) + "T" + pad(now.getHours()) + ":" + pad(now.getMinutes());
+    $("fechaHoraRegistro").value = local;
+
+    $("anomaliaOtroElemento").dispatchEvent(new Event("change"));
+    $("requiereRiel").dispatchEvent(new Event("change"));
+    setCableBlocks(0);
+    applyCrRules();
+    refreshCeldaEnabled();
+    showMsg("Formulario limpio.", true);
+  });
+
+  // ===================== Enviar =====================
+  $("btnEnviar").addEventListener("click", async (e) => {
+    e.preventDefault();
+
+    if(!FLOW_URL || FLOW_URL.startsWith("PEGA_AQUI")){
+      showMsg("Falta configurar la URL del Flow dentro del HTML (const FLOW_URL).", false);
+      return;
+    }
+
+    // Validaciones básicas
+    const cr = $("CR").value || "";
+    if(!cr){
+      showMsg("Completa el campo obligatorio: CR", false);
+      return;
+    }
+
+    const tipoSed = $("tipoSed").value || "";
+    if(!tipoSed){
+      showMsg("Completa el campo obligatorio: tipo_sed", false);
+      return;
+    }
+
+    const rawSed = $("sed").value.trim();
+    if(!rawSed){
+      showMsg("Completa el campo obligatorio: sed", false);
+      return;
+    }
+
+    const norm = normalizeSed(rawSed);
+    if(!norm.ok){
+      showMsg(norm.reason, false);
+      return;
+    }
+    $("sed").value = norm.value;
+
+    const exp = expectedSuffixByTipo(tipoSed);
+    if(exp && norm.letter !== exp){
+      showMsg(`La SED no corresponde al tipo seleccionado. Si es "${tipoSed}", debe terminar en "${exp}".`, false);
+      return;
+    }
+
+    const celda = (tipoSed === "Convencional") ? $("celda").value.trim() : "";
+    if(tipoSed === "Convencional" && !celda){
+      showMsg("Para Tipo de SED Convencional, debes ingresar Celda.", false);
+      return;
+    }
+
+    const requiereRiel = $("requiereRiel").value || "";
+    if(!requiereRiel){
+      showMsg("Completa el campo obligatorio: ¿Requiere instalar riel?", false);
+      return;
+    }
+
+    const cantidadRieles = (requiereRiel === "Si") ? numOrNull("cantidadRieles") : null;
+    if(requiereRiel === "Si" && (!cantidadRieles || cantidadRieles < 1)){
+      showMsg("Si requiere instalar riel, ingresa cuántos rieles.", false);
+      return;
+    }
+
+    const nCables = Number($("numCablesCom").value || 0);
+    if(!nCables || nCables < 1 || nCables > 3){
+      showMsg("Selecciona el número de tipos de cables de comunicación encontrados (1 a 3).", false);
+      return;
+    }
+
+    if($("anomaliaOtroElemento").value === "Si" && !$("activoConAnomalia").value){
+      showMsg("Si hay anomalía en otro elemento, selecciona el activo con anomalía.", false);
+      return;
+    }
+
+    // Fotos (obligatorias)
+    const registro_id = makeRegistroId();
+
+    let fotosOut;
+    try{
+      fotosOut = await getFotosPayload();
+    }catch(e2){
+      showMsg("Error leyendo fotos. Intenta nuevamente.", false);
+      return;
+    }
+    if(!fotosOut.ok){
+      showMsg(fotosOut.reason, false);
+      return;
+    }
+
+    // Construir payload FINAL
+    const payload = {
+      token: TOKEN || undefined,
+      form_id: FORM_ID || undefined,
+
+      registro_id,
+
+      // Datos generales
+      fecha_hora_registro: $("fechaHoraRegistro").value || "",
+      empresa: $("empresa").value.trim(),
+      responsable_inspeccion: $("responsableInspeccion").value.trim(),
+      cr,
+
+      // Tipo -> SED -> Celda
+      tipo_sed: tipoSed,
+      sed: $("sed").value.trim(),
+      celda: (tipoSed === "Convencional") ? celda : null,
+
+      // Cable de comunicación - Sistema general
+      corriente_r: numOrNull("corrienteR"),
+      corriente_s: numOrNull("corrienteS"),
+      corriente_t: numOrNull("corrienteT"),
+
+      // Condición física (global)
+      estado_fisico_cable: $("estadoFisicoCable").value,
+      estado_fisico_pletina: $("estadoFisicoPletina").value,
+      estado_fisico_conector: $("estadoFisicoConector").value,
+      comentario_cable: $("comentarioCable").value.trim(),
+
+      // Cantidad de cables
+      num_tipos_cables_com: nCables,
+
+      // Cable 1
+      cable_1: {
+        temp_c: numOrNull("tempCableC1"),
+        delta_c: numOrNull("deltaTempCableC1"),
+        fase_anomalia: $("faseAnomalia1").value,
+        anomalia_en: $("anomaliaEn1").value,
+        cantidad_ternas: numOrNull("cantidadTernas1"),
+        material: $("materialCable1").value,
+        tipo: $("tipoCable1").value,
+        seccion_mm2: numOrNull("seccionCable1")
+      },
+
+      // Cable 2 / 3
+      cable_2: nCables >= 2 ? {
+        temp_c: numOrNull("tempCableC2"),
+        delta_c: numOrNull("deltaTempCableC2"),
+        fase_anomalia: $("faseAnomalia2").value,
+        anomalia_en: $("anomaliaEn2").value,
+        cantidad_ternas: numOrNull("cantidadTernas2"),
+        material: $("materialCable2").value,
+        tipo: $("tipoCable2").value,
+        seccion_mm2: numOrNull("seccionCable2")
+      } : null,
+
+      cable_3: nCables >= 3 ? {
+        temp_c: numOrNull("tempCableC3"),
+        delta_c: numOrNull("deltaTempCableC3"),
+        fase_anomalia: $("faseAnomalia3").value,
+        anomalia_en: $("anomaliaEn3").value,
+        cantidad_ternas: numOrNull("cantidadTernas3"),
+        material: $("materialCable3").value,
+        tipo: $("tipoCable3").value,
+        seccion_mm2: numOrNull("seccionCable3")
+      } : null,
+
+      // Anomalía en otro elemento
+      anomalia_otro_elemento: $("anomaliaOtroElemento").value,
+      activo_con_anomalia: $("activoConAnomalia").value || "",
+      temp_max_registrada_c: numOrNull("tempMaxRegistrada"),
+      delta_otro_c: numOrNull("deltaOtroC"),
+      estado_fisico_obs_otro: $("estadoFisicoObsOtro").value.trim(),
+
+      // Estado subestación
+      estado_transformador: getMultiSelectValues("estadoTransformador"),
+      tipo_tablero: $("tipoTablero").value,
+      estado_tablero_bt: getMultiSelectValues("estadoTableroBT"),
+      estado_poste: getMultiSelectValues("estadoPoste"),
+      estado_mensula_cruceta: getMultiSelectValues("estadoMensulaCruceta"),
+      estado_ferreteria: getMultiSelectValues("estadoFerreteria"),
+      estado_cut_out: getMultiSelectValues("estadoCutOut"),
+
+      requiere_riel: requiereRiel,
+      cantidad_rieles: cantidadRieles,
+
+      observaciones_generales: $("observacionesGenerales").value.trim(),
+
+      // Fotos
+      fotos: fotosOut.fotos
+    };
+
+    // Check mínimos obligatorios (sin enumerar cables)
+    const must = [
+      ["fecha_hora_registro", payload.fecha_hora_registro],
+      ["empresa", payload.empresa],
+      ["responsable_inspeccion", payload.responsable_inspeccion],
+      ["cr", payload.cr],
+      ["tipo_sed", payload.tipo_sed],
+      ["sed", payload.sed],
+      ["num_tipos_cables_com", payload.num_tipos_cables_com],
+      ["tipo_tablero", payload.tipo_tablero],
+      ["requiere_riel", payload.requiere_riel]
+    ];
+    const missing = must.filter(([k,v]) => v === "" || v === null || v === undefined);
+    if(missing.length){
+      showMsg("Completa los campos obligatorios: " + missing.map(x=>x[0]).join(", "), false);
+      return;
+    }
+
+    // UI: bloquear botón mientras envía
+    const btn = $("btnEnviar");
+    btn.disabled = true;
+    btn.style.opacity = "0.7";
+
+    try{
+      showMsg("Enviando...", true);
+      const res = await fetch(FLOW_URL, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const text = await res.text();
+      let out = {};
+      try { out = JSON.parse(text); } catch(_) { out = { raw:text }; }
+
+      if(!res.ok){
+        showMsg(out.msg || ("Error HTTP " + res.status + ": " + (out.raw || "Fallo en el flujo")), false);
+        return;
+      }
+
+      showMsg(out.msg || "Enviado correctamente.", true);
+
+    }catch(err){
+      showMsg("No se pudo conectar con el Flow. Revisa la URL del Flow.", false);
+    }finally{
+      btn.disabled = false;
+      btn.style.opacity = "1";
+    }
+  });
+</script>
+
+
+</body>
+</html>
